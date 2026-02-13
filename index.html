@@ -10,6 +10,11 @@
         #click-btn:active { transform: scale(0.9); }
         .stats { margin-top: 30px; }
         button.upgrade { padding: 10px 20px; font-size: 1rem; cursor: pointer; }
+        
+        /* --- 実績リストの見た目 --- */
+        #achievements { margin-top: 40px; background: white; padding: 20px; border-radius: 10px; display: inline-block; width: 300px; }
+        .achievement-item { color: #ccc; margin: 10px 0; font-weight: bold; }
+        .cleared { color: #f1c40f; } /* クリアした実績は金色に！ */
     </style>
 </head>
 <body>
@@ -21,8 +26,15 @@
         <button id="upgrade-btn" class="upgrade">農機具を買う (コスト: 10)</button>
     </div>
 
+    <div id="achievements">
+        <h3>実績リスト</h3>
+        <div id="ach-100" class="achievement-item">🌽 君はとうもろこしが好きなの？（100粒収穫）</div>
+        <div id="ach-1000" class="achievement-item">🌽 コーン成金！（1000粒収穫）</div>
+        <div id="ach-power5" class="achievement-item">💪 力自慢？（クリック力 5以上）</div>
+    </div>
+
     <script>
-        // --- 1. 記憶のルール（セーブデータ読み込み） ---
+        // --- 1. 記憶の準備 ---
         let score = Number(localStorage.getItem('corn_score')) || 0;
         let clickPower = Number(localStorage.getItem('corn_power')) || 1;
         let upgradeCost = Number(localStorage.getItem('corn_cost')) || 10;
@@ -32,32 +44,43 @@
         const powerDisplay = document.getElementById('power');
         const upgradeBtn = document.getElementById('upgrade-btn');
 
-        // 画面を開いた時に保存されていた数字を表示する
         function updateDisplay() {
             scoreDisplay.textContent = score + " 粒";
             powerDisplay.textContent = clickPower;
             upgradeBtn.textContent = `農機具を買う (コスト: ${upgradeCost})`;
+            checkAchievements(); // 表示更新のたびに実績をチェック！
         }
-        updateDisplay();
 
-        // --- 2. セーブのルール（ブラウザに覚えさせる） ---
+        // --- 2. 実績を判定するルール（どめさんが改造するならここ！） ---
+        function checkAchievements() {
+            if (score >= 100) {
+                document.getElementById('ach-100').classList.add('cleared');
+            }
+            if (score >= 1000) {
+                document.getElementById('ach-1000').classList.add('cleared');
+            }
+            if (clickPower >= 5) {
+                document.getElementById('ach-power5').classList.add('cleared');
+            }
+        }
+
         function saveGame() {
             localStorage.setItem('corn_score', score);
             localStorage.setItem('corn_power', clickPower);
             localStorage.setItem('corn_cost', upgradeCost);
         }
 
-        // --- 3. 動きのルール ---
+        // --- 3. 動き ---
         document.getElementById('click-btn').addEventListener('click', () => {
             score += clickPower;
             updateDisplay();
-            saveGame(); // クリックするたびにセーブ
+            saveGame();
         });
 
         setInterval(() => {
             score += autoPower;
             updateDisplay();
-            if (score % 5 === 0) saveGame(); // 5粒ごとにセーブ
+            if (score % 5 === 0) saveGame();
         }, 1000);
 
         upgradeBtn.addEventListener('click', () => {
@@ -66,11 +89,11 @@
                 clickPower++;
                 upgradeCost = Math.floor(upgradeCost * 1.5);
                 updateDisplay();
-                saveGame(); // 購入した時にセーブ
+                saveGame();
             }
         });
 
-        // タブを閉じる直前にも念のためセーブ
+        updateDisplay();
         window.onbeforeunload = saveGame;
     </script>
 </body>
