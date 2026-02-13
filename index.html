@@ -1,39 +1,77 @@
-<script>
-    // --- 1. 記憶するルール（データの準備） ---
-    let score = 0;
-    let clickPower = 1;
-    let upgradeCost = 10;
-    let autoPower = 0;       // 【追加】1秒間に自動で増える量
-    let autoCost = 50;       // 【追加】自動収穫機の値段
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>コーンクリックゲーム 🌽</title>
+    <style>
+        body { text-align: center; font-family: sans-serif; background: #fff4e0; padding-top: 50px; }
+        #counter { font-size: 3rem; color: #d35400; margin: 20px; }
+        #click-btn { font-size: 5rem; cursor: pointer; background: none; border: none; transition: transform 0.1s; }
+        #click-btn:active { transform: scale(0.9); }
+        .stats { margin-top: 30px; }
+        button.upgrade { padding: 10px 20px; font-size: 1rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>コーンを増やせ！ 🌽</h1>
+    <div id="counter">0 粒</div>
+    <button id="click-btn">🌽</button>
+    <div class="stats">
+        <p>1クリックの収穫量: <span id="power">1</span></p>
+        <button id="upgrade-btn" class="upgrade">農機具を買う (コスト: 10)</button>
+    </div>
 
-    const scoreDisplay = document.getElementById('counter');
-    const powerDisplay = document.getElementById('power');
-    const upgradeBtn = document.getElementById('upgrade-btn');
+    <script>
+        // --- 1. 記憶のルール（セーブデータ読み込み） ---
+        let score = Number(localStorage.getItem('corn_score')) || 0;
+        let clickPower = Number(localStorage.getItem('corn_power')) || 1;
+        let upgradeCost = Number(localStorage.getItem('corn_cost')) || 10;
+        let autoPower = 1; 
 
-    // --- 2. 動きのルール（クリック反応） ---
-    document.getElementById('click-btn').addEventListener('click', () => {
-        score += clickPower;
-        scoreDisplay.textContent = score + " 粒";
-    });
+        const scoreDisplay = document.getElementById('counter');
+        const powerDisplay = document.getElementById('power');
+        const upgradeBtn = document.getElementById('upgrade-btn');
 
-    // --- 3. 自動で増やすルール（ここが心臓部！） ---
-    // 1000ミリ秒（＝1秒）ごとに、中のプログラムを実行せよ！という命令
-    setInterval(() => {
-        score += autoPower; // 1秒ごとに自動パワー分を足す
-        scoreDisplay.textContent = score + " 粒";
-    }, 1000);
-
-    // --- 4. 買い物をするルール ---
-    // ここを改造すれば、値段を2倍にしたり、もっと強力な道具を作ったりできます！
-    upgradeBtn.addEventListener('click', () => {
-        if (score >= upgradeCost) {
-            score -= upgradeCost;
-            clickPower++;
-            upgradeCost = Math.floor(upgradeCost * 1.5); // 1.5倍ずつ高くする計算
-            // 表示を更新する
+        // 画面を開いた時に保存されていた数字を表示する
+        function updateDisplay() {
             scoreDisplay.textContent = score + " 粒";
             powerDisplay.textContent = clickPower;
             upgradeBtn.textContent = `農機具を買う (コスト: ${upgradeCost})`;
         }
-    });
-</script>
+        updateDisplay();
+
+        // --- 2. セーブのルール（ブラウザに覚えさせる） ---
+        function saveGame() {
+            localStorage.setItem('corn_score', score);
+            localStorage.setItem('corn_power', clickPower);
+            localStorage.setItem('corn_cost', upgradeCost);
+        }
+
+        // --- 3. 動きのルール ---
+        document.getElementById('click-btn').addEventListener('click', () => {
+            score += clickPower;
+            updateDisplay();
+            saveGame(); // クリックするたびにセーブ
+        });
+
+        setInterval(() => {
+            score += autoPower;
+            updateDisplay();
+            if (score % 5 === 0) saveGame(); // 5粒ごとにセーブ
+        }, 1000);
+
+        upgradeBtn.addEventListener('click', () => {
+            if (score >= upgradeCost) {
+                score -= upgradeCost;
+                clickPower++;
+                upgradeCost = Math.floor(upgradeCost * 1.5);
+                updateDisplay();
+                saveGame(); // 購入した時にセーブ
+            }
+        });
+
+        // タブを閉じる直前にも念のためセーブ
+        window.onbeforeunload = saveGame;
+    </script>
+</body>
+</html>
